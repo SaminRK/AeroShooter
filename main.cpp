@@ -1,10 +1,33 @@
-# include "iGraphics.h"
+#include "iGraphics.h"
+#include <iostream>
+#include <cstdio>
+using namespace std;
+
+
+int screenX = 500;
+int screenY = 500;
+
+struct fighter{
+
+    int initialX = screenX / 2;
+    int initialY = 0;
+    int x = initialX;
+    int y = initialY;
+    int width = 30;
+    int length = 60;
+    int velocity = 5;
+
+};
+
+fighter fighter1;
 /*
 function iDraw() is called again and again by the system.
 */
 void iDraw(){
     //place your drawing codes here
     iClear();
+    iSetColor(255, 255, 255);
+    iFilledRectangle(fighter1.x - fighter1.width/2, fighter1.y, fighter1.width, fighter1.length);
 }
 /*
 function iMouseMove() is called when the user presses and drags the mouse.
@@ -33,6 +56,12 @@ void iKeyboard(unsigned char key){
     if(key == 'q'){
         //do something with 'q'
     }
+    if(key == 'x'){
+        if (fighter1.x + fighter1.width / 2 <= screenX) (fighter1.x)+= (fighter1.velocity);
+    }
+    if(key == 'z'){
+        if (fighter1.x - fighter1.width / 2>= 0) (fighter1.x)-= (fighter1.velocity);
+    }
 //place your codes for other keys here
 }
 /*
@@ -53,6 +82,6 @@ void iSpecialKeyboard(unsigned char key){
 
 int main(){
     //place your own initialization codes here.
-    iInitialize(400, 400, "demooo");
+    iInitialize(screenX, screenY, "demooo");
     return 0;
 }
