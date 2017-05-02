@@ -1,13 +1,15 @@
 # depslib dependency file v1.0
-1493131700 source:f:\termproject\project\main.cpp
+1493737164 source:f:\termproject\project\main.cpp
 	"iGraphics.h"
+	<iostream>
+	<cstdio>
 
-1492276031 f:\termproject\project\igraphics.h
+1493432208 f:\termproject\project\igraphics.h
 	<stdio.h>
 	<stdlib.h>
 	<gl/glut.h>
 	<time.h>
 	<math.h>
 	<windows.h>
-	<gl/glaux.h>
+	<gl\glaux.h>
 
