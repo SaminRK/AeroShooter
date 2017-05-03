@@ -3,9 +3,14 @@
 #include <cstdio>
 using namespace std;
 
-#define MAGAZINE 3
+#define MAGAZINE 10
+#define ENEMY 4
 
 void showBullet(void);
+
+void showEnemy(void);
+
+void kill(void);
 
 
 int screenX = 500;
@@ -17,15 +22,32 @@ struct fighter{
 
     int initialX = screenX / 2;
     int initialY = 0;
-    int x = initialX;
-    int y = initialY;
+    float x = initialX;
+    float y = initialY;
     int width = 30;
     int length = 60;
-    int velocity = 5;
+    float velocity = 5;
+    int life;
 
 };
 
 fighter fighter1;
+
+struct enemyFighter{
+
+    int initialX;
+    int initialY = 200;
+    float x = initialX;
+    float y = initialY;
+    int width = 30;
+    int length = 60;
+    float velocity = 0.00 ;
+    int existance = 1;
+};
+
+enemyFighter enemyFighter[ENEMY];
+
+
 
 struct bullet{
 
@@ -48,6 +70,8 @@ void iDraw(){
     iFilledRectangle(fighter1.x - fighter1.width/2, fighter1.y, fighter1.width, fighter1.length);
 
     showBullet();
+    showEnemy();
+    kill();
 }
 /*
 function iMouseMove() is called when the user presses and drags the mouse.
@@ -131,12 +155,47 @@ void showBullet(void){
             bullet[i].y += bullet[i].velocity;
         }
     }
+}
+
+void showEnemy(void){
+
+    int i;
+    iSetColor(200, 200, 200);
+    for (i = 0; i < ENEMY; i++){
+        if (enemyFighter[i].existance){
+            iFilledRectangle(enemyFighter[i].x - enemyFighter[i].width/2, enemyFighter[i].y, enemyFighter[i].width, enemyFighter[i].length);
+            enemyFighter[i].y -= enemyFighter[i].velocity;
+        }
+    }
+    iSetColor(255, 255, 255);
+}
+
+void kill(void){
+
+    int i, j;
+    for (i = 0 ; i < MAGAZINE; i++){
+        for (j = 0; j < ENEMY; j++){
+            if (bullet[i].x >= enemyFighter[j].x - enemyFighter[j].width / 2 && bullet[i].x <= enemyFighter[j].x + enemyFighter[j]. width / 2 && bullet[i].y >= enemyFighter[j].y && bullet[i].y <= enemyFighter[j].y){
+                enemyFighter[j].existance = 0;
+                bullet[i].killingPower = 0;
+                enemyFighter[j].x = -200;
+            }
+        }
+    }
 
 }
 
 int main(){
     //place your own initialization codes here.
-    iInitialize(screenX, screenY, "demooo");
+    enemyFighter[0].x = 200;
+    enemyFighter[1].x = 100;
+    enemyFighter[2].x = 20;
+    enemyFighter[3].x = 150;
     b = 0;
+    fighter1.life = 3;
+    iInitialize(screenX, screenY, "demooo");
+
+
+
     return 0;
 }
