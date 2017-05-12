@@ -1,10 +1,10 @@
 # depslib dependency file v1.0
-1493839579 source:f:\termproject\project\main.cpp
+1494266683 source:f:\termproject\project\main.cpp
 	"iGraphics.h"
 	<iostream>
 	<cstdio>
 
-1493432208 f:\termproject\project\igraphics.h
+1493810122 f:\termproject\project\igraphics.h
 	<stdio.h>
 	<stdlib.h>
 	<gl/glut.h>

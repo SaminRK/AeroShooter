@@ -95,10 +95,23 @@ void iResumeTimer(int index){
 }
 
 
+void iGetPixelColor (int cursorX, int cursorY, int rgb[])
+{
+	GLubyte pixel[3];
+	glReadPixels(cursorX, cursorY,1,1,
+		GL_RGB,GL_UNSIGNED_BYTE,(void *)pixel);
+
+	rgb[0] = pixel[0];
+	rgb[1] = pixel[1];
+	rgb[2] = pixel[2];
+
+	//printf("%d %d %d\n",pixel[0],pixel[1],pixel[2]);
+}
+
 // Added by Prof. Ashikur Rahman
 
 int ImageLoad(char *filename, Image *image) {
-    FILE *file;
+        FILE *file;
     unsigned long size; // size of the image in bytes.
     unsigned long i; // standard counter.
     unsigned short int plane; // number of planes in image
@@ -118,15 +131,13 @@ int ImageLoad(char *filename, Image *image) {
         printf("Error reading width from %s.\n", filename);
         return 0;
     }
-    //printf("Width of %s: %lu\n", filename, image->sizeX);
+   // printf("Width of %s: %lu\n", filename, image->sizeX);
     // read the height
     if ((i = fread(&image->sizeY, 4, 1, file)) != 1) {
         printf("Error reading height from %s.\n", filename);
         return 0;
     }
-    //printf("Height of %s: %lu\n", filename, image->sizeY);
-    // calculate the size (assuming 24 bits or 3 bytes per pixel).
-    size = image->sizeX * image->sizeY * 3;
+   // printf("Height of %s: %lu\n", filename, image->sizeY);
     // read the planes
     if ((fread(&plane, 2, 1, file)) != 1) {
         printf("Error reading planes from %s.\n", filename);
@@ -145,18 +156,62 @@ int ImageLoad(char *filename, Image *image) {
         printf("Bpp from %s is not 24: %u\n", filename, bpp);
         return 0;
     }
+    int biRGB;
+    // read the bitsperpixel
+    if ((i = fread(&biRGB, 4, 1, file)) != 1) {
+        printf("Error reading bpp from %s.\n", filename);
+        return 0;
+    }
+
+    if ((i = fread(&size, 4, 1, file)) != 1) {
+        printf("Error reading bpp from %s.\n", filename);
+        return 0;
+    }
+
+   // printf("Size of BMP Data :%d \n",size);
+
     // seek past the rest of the bitmap header.
-    fseek(file, 24, SEEK_CUR);
+    fseek(file, 16, SEEK_CUR);
+
+
+    int pad = 0; // Set pad byte count per row to zero by default.
+    // Each row needs to be a multiple of 4 bytes.
+    if ((image->sizeX * 3) % 4 != 0) pad = 4 - ((image->sizeX * 3) % 4); // 4 - remainder(width * 3 / 4).
+    // calculate the size (assuming 24 bits or 3 bytes per pixel).
+//    int skipBytes = (4-(image->sizeX*3)%4)%4;
+    size = (image->sizeX*3+pad) * image->sizeY;
+//    printf("Size of BMP Data :%d %d\n",size,pad);
+ //   printf("Bytes to be skipped: %d\n",pad);
+    // read the data.
+    char* p = (char *) malloc(size);
+    if (p == NULL) {
+        printf("Error allocating memory for color-corrected image data");
+        return 0;
+    }
+    if ((i = fread(p, size, 1, file)) != 1) {
+        printf("Error reading image data from %s.\n", filename);
+        return 0;
+    }
+    // calculate the size (assuming 24 bits or 3 bytes per pixel).
+    size = image->sizeX * image->sizeY*3;
     // read the data.
     image->data = (char *) malloc(size);
     if (image->data == NULL) {
         printf("Error allocating memory for color-corrected image data");
         return 0;
     }
-    if ((i = fread(image->data, size, 1, file)) != 1) {
-        printf("Error reading image data from %s.\n", filename);
-        return 0;
+    int j,k;
+    for(i = 0,j=1,k=0; i < size;){
+        image->data[i++] = p[k++];
+        image->data[i++] = p[k++];
+        image->data[i++] = p[k++];
+        if(j == image->sizeX){
+            j = 1;
+            k += pad;
+        }
+        else j++;
     }
+
     for (i=0;i<size;i+=3) { // reverse all of the colors. (bgr -> rgb)
         temp = image->data[i];
         image->data[i] = image->data[i+2];
@@ -164,6 +219,7 @@ int ImageLoad(char *filename, Image *image) {
     }
     fclose(file);
     // we're done.
+    free(p);
     return 1;
 }
 
@@ -184,48 +240,6 @@ Image * loadTexture(char* filename){
     return image1;
 }
 
-// Modified by Prof. Ashikur Rahman
-void iShowBMP(int x, int y, char filename[])
-{
-    //Commented out by Prof. Ashikur Rahman
-
-//	AUX_RGBImageRec *TextureImage;
-
-//	TextureImage = auxDIBImageLoad(filename);
-
-    // Added by Prof. Ashikur Rahman
-
-    Image *TextureImage = loadTexture(filename);
-    if(TextureImage == NULL){
-       printf("Image was not returned from loadTexture\n");
-       exit(0);
-    }
-
-     //Following was like before from Nirjon
-
-     glRasterPos2f(x, y);
-     glDrawPixels(TextureImage->sizeX, TextureImage->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage->data);
-
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TextureImage->sizeX, TextureImage->sizeY, 0, GL_RGB,GL_UNSIGNED_BYTE,TextureImage->data);//The change is here GL_UNSIGNED_BYTE,
-
-	free(TextureImage->data);
-	free(TextureImage);
-
-}
-
-
-void iGetPixelColor (int cursorX, int cursorY, int rgb[])
-{
-	GLubyte pixel[3];
-	glReadPixels(cursorX, cursorY,1,1,
-		GL_RGB,GL_UNSIGNED_BYTE,(void *)pixel);
-
-	rgb[0] = pixel[0];
-	rgb[1] = pixel[1];
-	rgb[2] = pixel[2];
-
-	//printf("%d %d %d\n",pixel[0],pixel[1],pixel[2]);
-}
 
 void iText(GLdouble x, GLdouble y, char *str, void* font=GLUT_BITMAP_8_BY_13)
 {
@@ -250,6 +264,122 @@ void iPoint(double x, double y, int size=0)
 	}
 	glEnd();
 }
+// Heavily Modified by Prof. Ashikur Rahman
+//
+// This is a very tricky algorithm!!!!
+//
+//
+// Puts a BMP image on screen
+//
+// parameters:
+//  x - x coordinate
+//  y - y coordinate
+//  filename - name of the BMP file
+//  ignoreColor - A specified color that should not be rendered. If you have an
+//                image strip that should be rendered on top of another back
+//                ground image, then the background of the image strip should
+//                not get rendered. Use the background color of the image strip
+//                in ignoreColor parameter. Then the strip's background does
+//                not get rendered.
+//
+//                To disable this feature, put -1 in this parameter
+//
+void iShowBMP2(int x, int y, char filename[], int ignoreColor)
+{
+    Image *TextureImage = loadTexture(filename);
+    if(TextureImage == NULL){
+       printf("Image was not returned from loadTexture\n");
+       exit(0);
+    }
+
+    // glRasterPos2f(x, y);
+    // glDrawPixels(TextureImage->sizeX, TextureImage->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage->data);
+
+    int i,j,k;
+    int width = TextureImage->sizeX;
+    int height = TextureImage->sizeY;
+    int nPixels = width * height;
+    //int *rgPixels = new int[nPixels];
+    unsigned char *bgraBuffer = new unsigned char[nPixels*4];
+
+    int posBgr = 0;
+    int posBgra = 0;
+    int pi = 0;
+    for (int i = 0; i < nPixels; i++){
+        pi = 0;
+        pi |= TextureImage->data[posBgr];
+        pi &= 0x000000FF;
+        pi = (pi << 8)|TextureImage->data[posBgr+1];
+        pi &= 0x0000FFFF;
+        pi = (pi << 8)|TextureImage->data[posBgr+2];
+        pi &= 0x00FFFFFF;
+        //Sets the alpha buffer value.
+        if (ignoreColor == pi){
+                int rgb[3];
+                iGetPixelColor (x+i%TextureImage->sizeX, y+i/TextureImage->sizeX, rgb);
+                bgraBuffer[posBgra] = rgb[0];
+                bgraBuffer[posBgra+1] = rgb[1];
+                bgraBuffer[posBgra+2] = rgb[2];
+                bgraBuffer[posBgra + 3] = 0;
+        }
+        else
+        {
+            bgraBuffer[posBgra] = TextureImage->data[posBgr];          //This is the buffer value of R.
+            bgraBuffer[posBgra + 1] = TextureImage->data[posBgr + 1];  //This is the buffer value of G.
+            bgraBuffer[posBgra + 2] = TextureImage->data[posBgr+2];  //This is the buffer value of B.
+            bgraBuffer[posBgra + 3] = 255;
+        }
+        //bgraBuffer[posBgra + 3] = 0;
+        posBgr += 3;
+        posBgra += 4;
+}
+
+    glRasterPos2f(x, y);
+    glDrawPixels(TextureImage->sizeX, TextureImage->sizeY, GL_RGBA, GL_UNSIGNED_BYTE, bgraBuffer);
+
+    /*for(i = 0; i < TextureImage->sizeY; i++){
+        glRasterPos2f(x, y+i);
+        glDrawPixels(TextureImage->sizeX, 1, GL_RGBA, GL_UNSIGNED_BYTE, bgraBuffer+i*4*TextureImage->sizeX);
+    }*/
+   // glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, TextureImage->sizeX, TextureImage->sizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, bgraBuffer);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TextureImage->sizeX, TextureImage->sizeY, 0, GL_BGR(A)_EXT GL.GL_UNSIGNED_BYTE, pBgraBuffer);glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TextureImage->sizeX, TextureImage->sizeY, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgPixels);
+
+    delete []bgraBuffer;
+    free(TextureImage->data);
+    free(TextureImage);
+}
+
+void iShowBMP(int x, int y, char filename[])
+{
+    //Commented out by Prof. Ashikur Rahman
+
+//	AUX_RGBImageRec *TextureImage;
+
+//	TextureImage = auxDIBImageLoad(filename);
+
+    // Added by Prof. Ashikur Rahman
+
+//    Image *TextureImage = loadTexture(filename);
+//    if(TextureImage == NULL){
+//       printf("Image was not returned from loadTexture\n");
+//       exit(0);
+//    }
+
+     //Following was like before from Nirjon
+
+ //    glRasterPos2f(x, y);
+ //    glDrawPixels(TextureImage->sizeX, TextureImage->sizeY, GL_RGB, GL_UNSIGNED_BYTE, TextureImage->data);
+
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TextureImage->sizeX, TextureImage->sizeY, 0, GL_RGB,GL_UNSIGNED_BYTE,TextureImage->data);//The change is here GL_UNSIGNED_BYTE,
+
+//	free(TextureImage->data);
+//	free(TextureImage);
+
+   iShowBMP2(x, y, filename,-1);
+
+}
+
+
 
 void iLine(double x1, double y1, double x2, double y2)
 {

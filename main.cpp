@@ -4,19 +4,25 @@
 using namespace std;
 
 #define MAGAZINE 10
-#define ENEMY 4
+#define ENEMY 20
 
 void showBullet(void);
-
 void showEnemy(void);
-
 void kill(void);
+void createEnemy(void);
+void collision(void);
+void restart(void);
 
 
 int screenX = 500;
 int screenY = 500;
 
-int b;
+int scoreX = screenX - 100;
+int scoreY = screenY - 50;
+char str[100];
+char strtemp[50];
+
+int b, enemySerial, score;
 
 struct fighter{
 
@@ -24,10 +30,11 @@ struct fighter{
     int initialY = 0;
     float x = initialX;
     float y = initialY;
-    int width = 30;
+    int width = 79;
     int length = 60;
     float velocity = 5;
     int life;
+    int bmpx = initialX - 45;
 
 };
 
@@ -36,13 +43,13 @@ fighter fighter1;
 struct enemyFighter{
 
     int initialX;
-    int initialY = 200;
+    int initialY = screenY - 100;
     float x = initialX;
     float y = initialY;
     int width = 30;
     int length = 60;
-    float velocity = 0.00 ;
-    int existance = 1;
+    float velocity = 01 ;
+    int existance = 0;
 };
 
 enemyFighter enemyFighter[ENEMY];
@@ -53,7 +60,7 @@ struct bullet{
 
     float x;
     float y;
-    float velocity = 0.5;
+    float velocity = 5;
     int killingPower = 0;
 
 
@@ -66,12 +73,25 @@ function iDraw() is called again and again by the system.
 void iDraw(){
     //place your drawing codes here
     iClear();
+
+    fighter1.bmpx = fighter1.x - 39;
+
+    iSetColor(20, 49, 96);
+    iFilledRectangle(0, 0, screenX, screenY);
     iSetColor(255, 255, 255);
     iFilledRectangle(fighter1.x - fighter1.width/2, fighter1.y, fighter1.width, fighter1.length);
+    iShowBMP2(fighter1.bmpx , fighter1.y, "bmp\\basic player.bmp", 0);
+    iText(scoreX, scoreY, itoa(score, str, 10), GLUT_BITMAP_9_BY_15);
+    iText(scoreX - 75, scoreY, "Score :", GLUT_BITMAP_9_BY_15);
+    iText(scoreX - 75, scoreY - 50 , "Life :", GLUT_BITMAP_9_BY_15);
+    iText(scoreX, scoreY - 50, itoa(fighter1.life, strtemp, 10), GLUT_BITMAP_9_BY_15);
 
     showBullet();
     showEnemy();
     kill();
+    collision();
+    restart();
+
 }
 /*
 function iMouseMove() is called when the user presses and drags the mouse.
@@ -87,6 +107,13 @@ function iMouse() is called when the user presses/releases the mouse.
 void iMouse(int button, int state, int mx, int my){
     if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
         //place your codes here
+        bullet[b].killingPower = 1;
+        bullet[b].x = fighter1.x;
+        bullet[b].y = fighter1.y + fighter1.length;
+        b++;
+        if(b >= MAGAZINE){
+            b = 0;
+        }
     }
     if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
     //place your codes here
@@ -109,7 +136,7 @@ void iKeyboard(unsigned char key){
     if(key == 'f'){
         bullet[b].killingPower = 1;
         bullet[b].x = fighter1.x;
-        bullet[b].y = fighter1.y;
+        bullet[b].y = fighter1.y + fighter1.length;
         b++;
         if(b >= MAGAZINE){
             b = 0;
@@ -175,26 +202,66 @@ void kill(void){
     int i, j;
     for (i = 0 ; i < MAGAZINE; i++){
         for (j = 0; j < ENEMY; j++){
-            if (bullet[i].x >= enemyFighter[j].x - enemyFighter[j].width / 2 && bullet[i].x <= enemyFighter[j].x + enemyFighter[j]. width / 2 && bullet[i].y >= enemyFighter[j].y && bullet[i].y <= enemyFighter[j].y){
+            if (bullet[i].x >= enemyFighter[j].x - enemyFighter[j].width / 2 && bullet[i].x <= enemyFighter[j].x + enemyFighter[j]. width / 2 && bullet[i].y >= enemyFighter[j].y && bullet[i].y <= enemyFighter[j].y + enemyFighter[j].length && bullet[i].killingPower){
                 enemyFighter[j].existance = 0;
                 bullet[i].killingPower = 0;
                 enemyFighter[j].x = -200;
+                cout << "score: "<<++score << endl;
             }
         }
+    }
+}
+
+void createEnemy(void){
+
+    enemyFighter[enemySerial].existance = 1;
+    enemyFighter[enemySerial].x = rand() % screenX;
+    enemyFighter[enemySerial].y = enemyFighter[enemySerial].initialY + 200;
+    enemySerial++;
+    if (enemySerial >= ENEMY) enemySerial = 0;
+}
+
+void collision(void){
+
+    int i;
+
+    for (i = 0; i < ENEMY; i++){
+        if (((fighter1.x - enemyFighter[i].x) <= fighter1.width) && ((enemyFighter[i].x - fighter1.x) <= fighter1.width)  && ((enemyFighter[i].y - fighter1.y) <=fighter1.length) && (( fighter1.y - enemyFighter[i].y) <=fighter1.length) && enemyFighter[i].existance == 1){
+            enemyFighter[i].existance = 0;
+            fighter1.life--;
+            enemyFighter[i].x = -200;
+            cout << "life: " << fighter1.life;
+        }
+    }
+}
+
+void restart(void){
+
+    if (fighter1.life <= 0){
+        fighter1.x = fighter1.initialX;
+        fighter1.y = fighter1.initialY;
+        fighter1.life = 3;
+        score = 0;
     }
 
 }
 
 int main(){
     //place your own initialization codes here.
-    enemyFighter[0].x = 200;
-    enemyFighter[1].x = 100;
-    enemyFighter[2].x = 20;
-    enemyFighter[3].x = 150;
+    //enemyFighter[0].x = 200;
+    //enemyFighter[1].x = 100;
+    //enemyFighter[2].x = 20;
+    //enemyFighter[3].x = 150;
+    score = 0;
+    enemySerial = 0;
     b = 0;
-    fighter1.life = 3;
-    iInitialize(screenX, screenY, "demooo");
 
+    fighter1.life = 3;
+    iSetTimer(5000, createEnemy);
+
+
+
+    iInitialize(screenX, screenY, "demooo");
 
 
     return 0;
