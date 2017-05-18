@@ -4,6 +4,7 @@
 using namespace std;
 
 #define MAGAZINE 10
+#define ENEMYBULLET 50
 #define ENEMY 20
 
 void showBullet(void);
@@ -12,7 +13,15 @@ void kill(void);
 void createEnemy(void);
 void collision(void);
 void restart(void);
+void myplaneshape(int x, int y, int w, int l);
+void enemyplaneshape(int x, int y, int w, int l);
+void fdelay(void);
+void enemyshoot(void);
+void enemybulletaction(void);
 
+int delay;
+
+int magazine = MAGAZINE;
 
 int screenX = 500;
 int screenY = 500;
@@ -22,7 +31,7 @@ int scoreY = screenY - 50;
 char str[100];
 char strtemp[50];
 
-int b, enemySerial, score;
+int b, eb, enemySerial, enemyfireserial, score;
 
 struct fighter{
 
@@ -30,11 +39,11 @@ struct fighter{
     int initialY = 0;
     float x = initialX;
     float y = initialY;
-    int width = 79;
+    int width = 80;
     int length = 60;
     float velocity = 5;
     int life;
-    int bmpx = initialX - 45;
+    //int bmpx = initialX - 45;
 
 };
 
@@ -46,10 +55,11 @@ struct enemyFighter{
     int initialY = screenY - 100;
     float x = initialX;
     float y = initialY;
-    int width = 30;
+    int width = 80;
     int length = 60;
-    float velocity = 01 ;
+    float velocity = .01 ;
     int existance = 0;
+    int shootingpower = 0;
 };
 
 enemyFighter enemyFighter[ENEMY];
@@ -60,13 +70,14 @@ struct bullet{
 
     float x;
     float y;
-    float velocity = 5;
+    float velocity = 0.2;
     int killingPower = 0;
 
 
 };
 
-bullet bullet[MAGAZINE];
+struct bullet bullet[MAGAZINE];
+struct bullet enemybullet[ENEMYBULLET];
 /*
 function iDraw() is called again and again by the system.
 */
@@ -74,13 +85,13 @@ void iDraw(){
     //place your drawing codes here
     iClear();
 
-    fighter1.bmpx = fighter1.x - 39;
+    //fighter1.bmpx = fighter1.x - 39;
 
     iSetColor(20, 49, 96);
     iFilledRectangle(0, 0, screenX, screenY);
     iSetColor(255, 255, 255);
-    iFilledRectangle(fighter1.x - fighter1.width/2, fighter1.y, fighter1.width, fighter1.length);
-    iShowBMP2(fighter1.bmpx , fighter1.y, "bmp\\basic player.bmp", 0);
+    myplaneshape(fighter1.x, fighter1.y, fighter1.width, fighter1.length);
+    //iShowBMP2(fighter1.bmpx , fighter1.y, "bmp\\basic player.bmp", 0);
     iText(scoreX, scoreY, itoa(score, str, 10), GLUT_BITMAP_9_BY_15);
     iText(scoreX - 75, scoreY, "Score :", GLUT_BITMAP_9_BY_15);
     iText(scoreX - 75, scoreY - 50 , "Life :", GLUT_BITMAP_9_BY_15);
@@ -91,6 +102,7 @@ void iDraw(){
     kill();
     collision();
     restart();
+    enemybulletaction();
 
 }
 /*
@@ -111,7 +123,7 @@ void iMouse(int button, int state, int mx, int my){
         bullet[b].x = fighter1.x;
         bullet[b].y = fighter1.y + fighter1.length;
         b++;
-        if(b >= MAGAZINE){
+        if(b >= magazine){
             b = 0;
         }
     }
@@ -134,12 +146,15 @@ void iKeyboard(unsigned char key){
         if (fighter1.x - fighter1.width / 2>= 0) (fighter1.x)-= (fighter1.velocity);
     }
     if(key == 'f'){
-        bullet[b].killingPower = 1;
-        bullet[b].x = fighter1.x;
-        bullet[b].y = fighter1.y + fighter1.length;
-        b++;
-        if(b >= MAGAZINE){
-            b = 0;
+        if(delay == 0){
+            delay = 1;
+            bullet[b].killingPower = 1;
+            bullet[b].x = fighter1.x;
+            bullet[b].y = fighter1.y + fighter1.length;
+            b++;
+            if(b >= magazine){
+                b = 0;
+            }
         }
     }
 //place your codes for other keys here
@@ -176,7 +191,7 @@ void showBullet(void){
 
     int i;
 
-    for (i = 0; i < MAGAZINE; i++){
+    for (i = 0; i < magazine; i++){
         if (bullet[i].killingPower){
             iFilledCircle(bullet[i].x, bullet[i].y, 5, 100);
             bullet[i].y += bullet[i].velocity;
@@ -190,7 +205,9 @@ void showEnemy(void){
     iSetColor(200, 200, 200);
     for (i = 0; i < ENEMY; i++){
         if (enemyFighter[i].existance){
-            iFilledRectangle(enemyFighter[i].x - enemyFighter[i].width/2, enemyFighter[i].y, enemyFighter[i].width, enemyFighter[i].length);
+            //iShowBMP2(enemyFighter[i].x , enemyFighter[i].y, "bmp\\basic enemy.bmp", 0);
+            //iFilledRectangle(enemyFighter[i].x - enemyFighter[i].width/2, enemyFighter[i].y, enemyFighter[i].width, enemyFighter[i].length);
+            enemyplaneshape(enemyFighter[i].x, enemyFighter[i].y, enemyFighter[i].width, enemyFighter[i].length);
             enemyFighter[i].y -= enemyFighter[i].velocity;
         }
     }
@@ -200,7 +217,7 @@ void showEnemy(void){
 void kill(void){
 
     int i, j;
-    for (i = 0 ; i < MAGAZINE; i++){
+    for (i = 0 ; i < magazine; i++){
         for (j = 0; j < ENEMY; j++){
             if (bullet[i].x >= enemyFighter[j].x - enemyFighter[j].width / 2 && bullet[i].x <= enemyFighter[j].x + enemyFighter[j]. width / 2 && bullet[i].y >= enemyFighter[j].y && bullet[i].y <= enemyFighter[j].y + enemyFighter[j].length && bullet[i].killingPower){
                 enemyFighter[j].existance = 0;
@@ -215,7 +232,7 @@ void kill(void){
 void createEnemy(void){
 
     enemyFighter[enemySerial].existance = 1;
-    enemyFighter[enemySerial].x = rand() % screenX;
+    enemyFighter[enemySerial].x = (rand() % (screenX - 80)) + 40;
     enemyFighter[enemySerial].y = enemyFighter[enemySerial].initialY + 200;
     enemySerial++;
     if (enemySerial >= ENEMY) enemySerial = 0;
@@ -243,7 +260,86 @@ void restart(void){
         fighter1.life = 3;
         score = 0;
     }
+}
 
+void myplaneshape(int x, int y, int w, int l){
+    double xa[] = {x - w/2, x, x + w/2};
+    double ya[] = {y + 5, y + l, y + 5};
+    int body = 20;
+    int ellipsemin = 7.5;
+    int ellipsemax = 15;
+
+    iFilledRectangle(x - w/2, y, w, l);
+    iSetColor(255, 0, 0);
+    iFilledPolygon(xa, ya, 3);
+    iSetColor(255, 100, 0);
+    iFilledRectangle(x - body/2, y , body, l + 20 );
+    iFilledEllipse(x, y + l + 20, 10, 20);
+    iSetColor(0, 0, 255);
+    iFilledEllipse(x, y + l + 10, ellipsemin, ellipsemax);
+    iSetColor(255, 255, 255);
+}
+
+void enemyplaneshape(int x, int y, int w, int l){
+    double xa[] = {x - w/2, x, x + w/2};
+    double ya[] = {y + l - 5 , y, y + l - 5};
+    int body = 20;
+    int ellipsemin = 7.5;
+    int ellipsemax = 15;
+
+
+    iFilledRectangle(x - w/2, y, w, l);
+    iSetColor(255, 0, 0);
+    iFilledPolygon(xa, ya, 3);
+    iSetColor(255, 255, 255);
+    iSetColor(255, 100, 0);
+    iFilledRectangle(x - body/2, y - 20 , body, l + 20 );
+    iFilledEllipse(x, y - 20, 10, 20);
+    iSetColor(0, 0, 255);
+    iFilledEllipse(x, y - 10, ellipsemin, ellipsemax);
+    iSetColor(255, 255, 255);
+}
+
+void fdelay(void){
+
+    if (delay) delay = 0;
+
+}
+
+void enemyshoot(void){
+
+
+    if (enemyFighter[enemyfireserial].existance){
+        enemybullet[eb].killingPower = 1;
+        enemybullet[eb].x = enemyFighter[enemyfireserial].x;
+        enemybullet[eb].y = enemyFighter[enemyfireserial].y - enemyFighter[enemyfireserial].length;
+        eb++;
+    }
+    if(eb >=ENEMYBULLET){
+        eb = 0;
+    }
+    if(enemyfireserial >= ENEMY){
+        enemyfireserial = 0;
+    }
+    enemyfireserial++;
+}
+
+void enemybulletaction(void){
+
+    int i, k;
+
+    for (k = 0; k < ENEMYBULLET; k++){
+        if (enemybullet[k].killingPower){
+            iFilledCircle(enemybullet[k].x, enemybullet[k].y, 5, 100);
+            enemybullet[k].y -= enemybullet[k].velocity;
+        }
+    }
+    for (i = 0 ; i < ENEMYBULLET; i++){
+        if (enemybullet[i].x >=  fighter1.x - fighter1.width / 2 && enemybullet[i].x <= fighter1.x + fighter1.width / 2 && enemybullet[i].y >= fighter1.y && enemybullet[i].y <= fighter1.y + fighter1.length && enemybullet[i].killingPower){
+            fighter1.life--;
+            enemybullet[i].killingPower = 0;
+        }
+    }
 }
 
 int main(){
@@ -254,14 +350,19 @@ int main(){
     //enemyFighter[3].x = 150;
     score = 0;
     enemySerial = 0;
+    enemyfireserial = 0;
     b = 0;
+    eb = 0;
+    delay = 0;
 
     fighter1.life = 3;
     iSetTimer(5000, createEnemy);
+    iSetTimer(1000, fdelay);
+    iSetTimer(200, enemyshoot);
 
 
 
-    iInitialize(screenX, screenY, "demooo");
+    iInitialize(screenX, screenY, "SS - fighter");
 
 
     return 0;
