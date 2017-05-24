@@ -1,12 +1,16 @@
 #include "iGraphics.h"
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>
 using namespace std;
 
 #define MAGAZINE 10
 #define ENEMYBULLET 50
 #define ENEMY 20
+#define CLOUD 10
 
+
+////////gameplay functions/////////
 void showBullet(void);
 void showEnemy(void);
 void kill(void);
@@ -18,20 +22,36 @@ void enemyplaneshape(int x, int y, int w, int l);
 void fdelay(void);
 void enemyshoot(void);
 void enemybulletaction(void);
+void cloudcreate(void);
+void showCloud(void);
+void indexPage(void);
 
-int delay;
-
-int magazine = MAGAZINE;
-
+//common variables//
 int screenX = 500;
 int screenY = 500;
+
+////index page variables////
+
+int titleX = screenX / 2;
+int titleY = screenY / 2;
+int enterX = titleX;
+int enterY = titleY - 100;
+int enterLength = 100;
+int enterBreadth = 50;
+
+int mouselocation = 0;
+
+////gameplay variables/////
+int delay, page;
+
+int magazine = MAGAZINE;
 
 int scoreX = screenX - 100;
 int scoreY = screenY - 50;
 char str[100];
 char strtemp[50];
 
-int b, eb, enemySerial, enemyfireserial, score;
+int b, eb, enemySerial, enemyfireserial, score, cloudserial;
 
 struct fighter{
 
@@ -57,7 +77,7 @@ struct enemyFighter{
     float y = initialY;
     int width = 80;
     int length = 60;
-    float velocity = .01 ;
+    float velocity = .02 ;
     int existance = 0;
     int shootingpower = 0;
 };
@@ -78,6 +98,17 @@ struct bullet{
 
 struct bullet bullet[MAGAZINE];
 struct bullet enemybullet[ENEMYBULLET];
+
+struct cloud{
+
+    float x;
+    float y;
+    int radius;
+    int existance;
+    float velocity = 0.01;
+};
+
+struct cloud cloud[CLOUD];
 /*
 function iDraw() is called again and again by the system.
 */
@@ -86,23 +117,29 @@ void iDraw(){
     iClear();
 
     //fighter1.bmpx = fighter1.x - 39;
-
-    iSetColor(20, 49, 96);
-    iFilledRectangle(0, 0, screenX, screenY);
-    iSetColor(255, 255, 255);
-    myplaneshape(fighter1.x, fighter1.y, fighter1.width, fighter1.length);
-    //iShowBMP2(fighter1.bmpx , fighter1.y, "bmp\\basic player.bmp", 0);
-    iText(scoreX, scoreY, itoa(score, str, 10), GLUT_BITMAP_9_BY_15);
-    iText(scoreX - 75, scoreY, "Score :", GLUT_BITMAP_9_BY_15);
-    iText(scoreX - 75, scoreY - 50 , "Life :", GLUT_BITMAP_9_BY_15);
-    iText(scoreX, scoreY - 50, itoa(fighter1.life, strtemp, 10), GLUT_BITMAP_9_BY_15);
-
-    showBullet();
-    showEnemy();
-    kill();
-    collision();
-    restart();
-    enemybulletaction();
+    if (page == 1){
+        iSetColor(20, 49, 96);
+        iFilledRectangle(0, 0, screenX, screenY);
+        showCloud();
+        iSetColor(255, 255, 255);
+        myplaneshape(fighter1.x, fighter1.y, fighter1.width, fighter1.length);
+        //iShowBMP2(fighter1.bmpx , fighter1.y, "bmp\\basic player.bmp", 0);
+        iSetColor(0, 255, 0);
+        iText(scoreX, scoreY, itoa(score, str, 10), GLUT_BITMAP_9_BY_15);
+        iText(scoreX - 75, scoreY, "Score :", GLUT_BITMAP_9_BY_15);
+        iText(scoreX - 75, scoreY - 50 , "Life :", GLUT_BITMAP_9_BY_15);
+        iText(scoreX, scoreY - 50, itoa(fighter1.life, strtemp, 10), GLUT_BITMAP_9_BY_15);
+        iSetColor(255, 255, 255);
+        showBullet();
+        showEnemy();
+        kill();
+        collision();
+        restart();
+        enemybulletaction();
+    }
+    else if(page == 0){
+        indexPage();
+    }
 
 }
 /*
@@ -111,6 +148,9 @@ function iMouseMove() is called when the user presses and drags the mouse.
 */
 void iMouseMove(int mx, int my){
     //place your codes here
+    if(page == 0 && mx >= enterX && mx <= enterX + enterLength && my >= enterY && my <= enterY + enterBreadth){
+        mouselocation = 1;
+    }
 }
 /*
 function iMouse() is called when the user presses/releases the mouse.
@@ -191,18 +231,20 @@ void showBullet(void){
 
     int i;
 
+    iSetColor(0, 0, 255);
     for (i = 0; i < magazine; i++){
         if (bullet[i].killingPower){
             iFilledCircle(bullet[i].x, bullet[i].y, 5, 100);
             bullet[i].y += bullet[i].velocity;
         }
     }
+    iSetColor(255, 255, 255);
 }
 
 void showEnemy(void){
 
     int i;
-    iSetColor(200, 200, 200);
+    //iSetColor(200, 200, 200);
     for (i = 0; i < ENEMY; i++){
         if (enemyFighter[i].existance){
             //iShowBMP2(enemyFighter[i].x , enemyFighter[i].y, "bmp\\basic enemy.bmp", 0);
@@ -269,7 +311,7 @@ void myplaneshape(int x, int y, int w, int l){
     int ellipsemin = 7.5;
     int ellipsemax = 15;
 
-    iFilledRectangle(x - w/2, y, w, l);
+    //iFilledRectangle(x - w/2, y, w, l);
     iSetColor(255, 0, 0);
     iFilledPolygon(xa, ya, 3);
     iSetColor(255, 100, 0);
@@ -288,7 +330,7 @@ void enemyplaneshape(int x, int y, int w, int l){
     int ellipsemax = 15;
 
 
-    iFilledRectangle(x - w/2, y, w, l);
+    //iFilledRectangle(x - w/2, y, w, l);
     iSetColor(255, 0, 0);
     iFilledPolygon(xa, ya, 3);
     iSetColor(255, 255, 255);
@@ -327,7 +369,7 @@ void enemyshoot(void){
 void enemybulletaction(void){
 
     int i, k;
-
+    iSetColor(255, 0, 0);
     for (k = 0; k < ENEMYBULLET; k++){
         if (enemybullet[k].killingPower){
             iFilledCircle(enemybullet[k].x, enemybullet[k].y, 5, 100);
@@ -340,6 +382,44 @@ void enemybulletaction(void){
             enemybullet[i].killingPower = 0;
         }
     }
+    iSetColor(255, 255, 255);
+}
+
+void cloudcreate(void){
+
+    cloud[cloudserial].existance = 1;
+    cloud[cloudserial].radius = rand() % 200 + 100;
+    cloud[cloudserial].x = rand() % screenX;
+    cloud[cloudserial].y = screenY + 200;
+    cloudserial++;
+    if (cloudserial >= CLOUD) cloudserial = 0;
+}
+
+void showCloud(){
+
+    int i;
+    //iSetColor(200, 200, 200);
+    iSetColor(255, 255, 255);
+    for (i = 0; i < CLOUD; i++){
+        if (cloud[i].existance){
+            iFilledCircle(cloud[i].x, cloud[i].y, cloud[i].radius, 100);
+            cloud[i].y -= cloud[i].velocity;
+            //enemyplaneshape(enemyFighter[i].x, enemyFighter[i].y, enemyFighter[i].width, enemyFighter[i].length);
+            //enemyFighter[i].y -= enemyFighter[i].velocity;
+        }
+    }
+    iSetColor(255, 255, 255);
+}
+
+void indexPage(void){
+    iSetColor(255, 255, 255);
+    iText(titleX, titleY, "AIR FIGHTER", GLUT_BITMAP_TIMES_ROMAN_24);
+    if(mouselocation == 0){
+        iRectangle(enterX, enterY, enterLength, enterBreadth);
+    }
+    if(mouselocation == 1){
+        iFilledRectangle(enterX, enterY, enterLength, enterBreadth);
+    }
 }
 
 int main(){
@@ -348,18 +428,21 @@ int main(){
     //enemyFighter[1].x = 100;
     //enemyFighter[2].x = 20;
     //enemyFighter[3].x = 150;
+    page = 0;
     score = 0;
     enemySerial = 0;
     enemyfireserial = 0;
+    cloudserial = 0;
     b = 0;
     eb = 0;
     delay = 0;
-
     fighter1.life = 3;
-    iSetTimer(5000, createEnemy);
-    iSetTimer(1000, fdelay);
-    iSetTimer(200, enemyshoot);
-
+    if(page == 1){
+        iSetTimer(7000, createEnemy);
+        iSetTimer(1000, fdelay);
+        iSetTimer(1000, enemyshoot);
+        iSetTimer(20000, cloudcreate);
+    }
 
 
     iInitialize(screenX, screenY, "SS - fighter");

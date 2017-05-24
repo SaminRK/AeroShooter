@@ -1,8 +1,9 @@
 # depslib dependency file v1.0
-1495128724 source:f:\termproject\project\main.cpp
+1495633642 source:f:\termproject\project\main.cpp
 	"iGraphics.h"
 	<iostream>
 	<cstdio>
+	<cstdlib>
 
 1493810122 f:\termproject\project\igraphics.h
 	<stdio.h>
