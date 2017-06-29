@@ -31,11 +31,12 @@ void checkhighscore(void);
 void resetgame(void);
 void takename(void);
 void writeHighscore(void);
+void highscorepage(void);
 
 //common variables//
 int screenX = 500;
 int screenY = 500;
-
+int page, opt;
 //highscore variables//
 
 char scorer[HS][100];
@@ -45,22 +46,10 @@ int naamdin = 0;
 char str1[100], str2[100];
 int len = 0;
 
-////index page variables////
-
-int titleX = screenX / 2 - 100;
-int titleY = screenY / 2;
-int enterX = titleX;
-int enterY = titleY - 100;
-
-////ending page ////
-int endX = titleX;
-int endY = titleY;
-int endscoreX = enterX;
-int endscoreY = enterY;
 
 
 ////gameplay variables/////
-int delay, page;
+int delay;
 
 int magazine = MAGAZINE;
 
@@ -129,9 +118,7 @@ function iDraw() is called again and again by the system.
 void iDraw(){
     //place your drawing codes here
     iClear();
-
-    //fighter1.bmpx = fighter1.x - 39;
-    if (page == 1){
+    if (page == 1){  //gameplay page == 1
         iSetColor(120, 105, 255);
         iFilledRectangle(0, 0, screenX, screenY);
         showCloud();
@@ -162,6 +149,9 @@ void iDraw(){
                 iText(55, 360, str1);
             }
         }
+    }
+    else if (page == 3){
+        highscorepage();
     }
 }
 /*
@@ -221,7 +211,20 @@ void iKeyboard(unsigned char key){
     }
     if(page == 0){
         if (key == '\r'){
-            page = 1;
+            if (opt == 1){
+                page = 1;
+            }
+            else if (opt == 2){
+                page = 3;
+            }
+            else if (opt == 3){
+                exit(0);
+            }
+        }
+    }
+    else if (page == 3){
+        if (key == '\r'){
+            page = 0;
         }
     }
     if (page == 2){
@@ -268,17 +271,25 @@ void iSpecialKeyboard(unsigned char key){
     if(key == GLUT_KEY_END){
         exit(0);
     }
-    if(key == GLUT_KEY_RIGHT){
-        if (fighter1.x + fighter1.width / 2 <= screenX) (fighter1.x)+= (fighter1.velocity);
+    if (page == 1){
+        if(key == GLUT_KEY_RIGHT){
+            if (fighter1.x + fighter1.width / 2 <= screenX) (fighter1.x)+= (fighter1.velocity);
+        }
+        if(key == GLUT_KEY_LEFT){
+            if (fighter1.x - fighter1.width / 2>= 0) (fighter1.x)-= (fighter1.velocity);
+        }
+        if(key == GLUT_KEY_UP){
+            if (fighter1.y - fighter1.length / 2<= screenY) (fighter1.y)+= (fighter1.velocity);
+        }
+        if(key == GLUT_KEY_DOWN){
+            if (fighter1.y + fighter1.length / 2>= 0) (fighter1.y)-= (fighter1.velocity);
+        }
     }
-    if(key == GLUT_KEY_LEFT){
-        if (fighter1.x - fighter1.width / 2>= 0) (fighter1.x)-= (fighter1.velocity);
-    }
-    if(key == GLUT_KEY_UP){
-        if (fighter1.y - fighter1.length / 2<= screenY) (fighter1.y)+= (fighter1.velocity);
-    }
-    if(key == GLUT_KEY_DOWN){
-        if (fighter1.y + fighter1.length / 2>= 0) (fighter1.y)-= (fighter1.velocity);
+    if (page == 0){
+        if (opt == 1 && key == GLUT_KEY_DOWN) opt = 2;
+        else if (opt == 2 && key == GLUT_KEY_DOWN) opt = 3;
+        else if (opt == 2 && key == GLUT_KEY_UP) opt = 1;
+        else if (opt == 3 && key == GLUT_KEY_UP) opt = 2;
     }
 
 //place your codes for other keys here
@@ -472,13 +483,64 @@ void showCloud(){
 }
 
 void indexPage(void){
+    ////index page variables////
+    int titleX = screenX / 2 - 100;
+    int titleY = screenY - 75;
+    int enterX = 140;
+    int enterY = 20;
+    int option_length = 200;
+    int option_width = 50;
+    int option_x = titleX - 25;
+    int option_y = titleY - 200;
+
+
     iSetColor(255, 255, 255);
     iText(titleX, titleY, "AIR FIGHTER", GLUT_BITMAP_HELVETICA_18);
-    iText(enterX, enterY, "press ENTER to play the game");
+    iText(enterX, enterY, "press ENTER to SELECT");
+    if(opt == 1) {
+        iFilledRectangle(option_x, option_y, option_length, option_width);
+        iSetColor(0, 0, 0);
+        iText(option_x + 55, option_y + 20, "NEW GAME", GLUT_BITMAP_9_BY_15);
+    }
+    else {
+        iSetColor(255, 255, 255);
+        iRectangle(option_x, option_y, option_length, option_width);
+        iText(option_x + 55, option_y + 20, "NEW GAME", GLUT_BITMAP_9_BY_15);
+    }
+    if(opt == 2) {
+        iFilledRectangle(option_x, option_y - 75, option_length, option_width);
+        iSetColor(0, 0, 0);
+        iText(option_x + 52.5, option_y + 20 - 75, "HIGHSCORE", GLUT_BITMAP_9_BY_15);
+    }
+    else {
+        iSetColor(255, 255, 255);
+        iRectangle(option_x, option_y - 75, option_length, option_width);
+        iText(option_x + 52.5, option_y + 20 - 75, "HIGHSCORE", GLUT_BITMAP_9_BY_15);
+    }
+    if(opt == 3) {
+        iFilledRectangle(option_x, option_y - 150, option_length, option_width);
+        iSetColor(0, 0, 0);
+        iText(option_x + 67.5, option_y + 20 - 150, "QUIT", GLUT_BITMAP_9_BY_15);
+    }
+    else {
+        iSetColor(255, 255, 255);
+        iRectangle(option_x, option_y - 150, option_length, option_width);
+        iText(option_x + 67.5, option_y + 20 - 150, "QUIT", GLUT_BITMAP_9_BY_15);
+    }
+
+
     iSetColor(0, 100, 200);
 }
 
 void endPage(void){
+    ////ending page ////
+    int endX = screenX / 2 - 100;
+    int endY = screenY / 2;
+    int endscoreX = endX;
+    int endscoreY = endY - 100;
+    int enterX = 100;
+    int enterY = 100;
+
     char temp[20];
     iSetColor(255, 255, 255);
     iText(endX, endY, "GAME OVER!!!!", GLUT_BITMAP_HELVETICA_18);
@@ -511,11 +573,11 @@ void storeHighscore(void){
 }
 
 void checkhighscore(void){
-    FILE *fp;
+    //FILE *fp;
     int i, j;
     //char* str = "saminnn";
 
-    fp = fopen("highscore.txt", "w");
+    //fp = fopen("highscore.txt", "w");
 
     for (idx = 10; idx > 0; idx--){
         if (score < hscore[idx - 1] ) break;
@@ -523,7 +585,7 @@ void checkhighscore(void){
     if (idx < 10){
         naamdin = 1;
     }
-    if (idx >= 9){
+    /*if (idx >= 9){
         for (i = 8; i >= idx; i--){
             hscore[i + 1] = hscore[i];
             for (j = 0; scorer[i][j] != 0; j++){
@@ -542,7 +604,7 @@ void checkhighscore(void){
             fprintf(fp, "%s %d\n", scorer[i], hscore[i]);
         }
     }
-    fclose(fp);
+    fclose(fp);*/
 }
 
 void writeHighscore(void){
@@ -577,7 +639,8 @@ void writeHighscore(void){
 
 void resetgame(void){
     int i;
-    page = 1;
+    page = 0;
+    opt = 1;
     score = 0;
     enemySerial = 0;
     enemyfireserial = 0;
@@ -606,9 +669,32 @@ void resetgame(void){
     }
 }
 
+void highscorepage(void){
+
+    int hs_x = screenX / 2 - 100;
+    int hs_y = screenY - 100;
+    int gapY = 30;
+    int start_x = 100;
+    int start_y = screenY - 200;
+    int i;
+    char str[100];
+
+
+    iSetColor(255, 255, 255);
+    iText(hs_x, hs_y, "HIGHSCORES", GLUT_BITMAP_HELVETICA_18);
+
+    for (i = 0; i < 10; i++){
+        iText(start_x, start_y, scorer[i]);
+        iText(start_x + 250, start_y, itoa(hscore[i], str, 10));
+        start_y -= gapY;
+    }
+
+}
+
 int main(){
     //place your own initialization codes here.
     page = 0;
+    opt = 1;
     score = 0;
     enemySerial = 0;
     enemyfireserial = 0;
