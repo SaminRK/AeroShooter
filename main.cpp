@@ -32,6 +32,7 @@ void resetgame(void);
 void takename(void);
 void writeHighscore(void);
 void highscorepage(void);
+void instructions(void);
 
 //common variables//
 int screenX = 500;
@@ -82,7 +83,7 @@ struct enemyFighter{
     float y = initialY;
     int width = 80;
     int length = 60;
-    float velocity = .02 ;
+    float velocity = .07 ;
     int existance = 0;
     int shootingpower = 0;
 };
@@ -95,7 +96,7 @@ struct bullet{
 
     float x;
     float y;
-    float velocity = 0.2;
+    float velocity = .75;
     int killingPower = 0;
 };
 
@@ -108,7 +109,7 @@ struct cloud{
     float y;
     int radius;
     int existance;
-    float velocity = 0.01;
+    float velocity = 0.03;
 };
 
 struct cloud cloud[CLOUD];
@@ -121,6 +122,7 @@ void iDraw(){
     if (page == 1){  //gameplay page == 1
         iSetColor(120, 105, 255);
         iFilledRectangle(0, 0, screenX, screenY);
+
         showCloud();
         iSetColor(255, 255, 255);
         showBullet();
@@ -143,15 +145,19 @@ void iDraw(){
         endPage();
         if (naamdin == 1){
             iSetColor(150, 150, 150);
-            iRectangle(50, 350, 250, 30);
+            iRectangle(160, 100, 250, 30);
             if (naamdin == 1) {
                 iSetColor(255, 255, 255);
-                iText(55, 360, str1);
+                iText(30, 110, "Enter your name:");
+                iText(165, 110, str1);
             }
         }
     }
     else if (page == 3){
         highscorepage();
+    }
+    else if (page == 4){
+        instructions();
     }
 }
 /*
@@ -218,11 +224,19 @@ void iKeyboard(unsigned char key){
                 page = 3;
             }
             else if (opt == 3){
+                page = 4;
+            }
+            else if (opt == 4){
                 exit(0);
             }
         }
     }
     else if (page == 3){
+        if (key == '\r'){
+            page = 0;
+        }
+    }
+    else if (page == 4){
         if (key == '\r'){
             page = 0;
         }
@@ -290,6 +304,8 @@ void iSpecialKeyboard(unsigned char key){
         else if (opt == 2 && key == GLUT_KEY_DOWN) opt = 3;
         else if (opt == 2 && key == GLUT_KEY_UP) opt = 1;
         else if (opt == 3 && key == GLUT_KEY_UP) opt = 2;
+        else if (opt == 3 && key == GLUT_KEY_DOWN) opt = 4;
+        else if (opt == 4 && key == GLUT_KEY_UP) opt = 3;
     }
 
 //place your codes for other keys here
@@ -484,16 +500,16 @@ void showCloud(){
 
 void indexPage(void){
     ////index page variables////
-    int titleX = screenX / 2 - 100;
+    int titleX = screenX / 2 - 55;
     int titleY = screenY - 75;
     int enterX = 140;
     int enterY = 20;
     int option_length = 200;
     int option_width = 50;
-    int option_x = titleX - 25;
-    int option_y = titleY - 200;
+    int option_x = titleX - 45;
+    int option_y = titleY - 100;
 
-
+    iShowBMP(0, 0, "bmp/index.bmp");
     iSetColor(255, 255, 255);
     iText(titleX, titleY, "AIR FIGHTER", GLUT_BITMAP_HELVETICA_18);
     iText(enterX, enterY, "press ENTER to SELECT");
@@ -520,13 +536,24 @@ void indexPage(void){
     if(opt == 3) {
         iFilledRectangle(option_x, option_y - 150, option_length, option_width);
         iSetColor(0, 0, 0);
-        iText(option_x + 67.5, option_y + 20 - 150, "QUIT", GLUT_BITMAP_9_BY_15);
+        iText(option_x + 50.5, option_y + 20 - 150, "INSTRUCTIONS", GLUT_BITMAP_9_BY_15);
     }
     else {
         iSetColor(255, 255, 255);
         iRectangle(option_x, option_y - 150, option_length, option_width);
-        iText(option_x + 67.5, option_y + 20 - 150, "QUIT", GLUT_BITMAP_9_BY_15);
+        iText(option_x + 50.5, option_y + 20 - 150, "INSTRUCTIONS", GLUT_BITMAP_9_BY_15);
     }
+    if(opt == 4) {
+        iFilledRectangle(option_x, option_y - 225, option_length, option_width);
+        iSetColor(0, 0, 0);
+        iText(option_x + 67.5, option_y + 20 - 225, "QUIT", GLUT_BITMAP_9_BY_15);
+    }
+    else {
+        iSetColor(255, 255, 255);
+        iRectangle(option_x, option_y - 225, option_length, option_width);
+        iText(option_x + 67.5, option_y + 20 - 225, "QUIT", GLUT_BITMAP_9_BY_15);
+    }
+
 
 
     iSetColor(0, 100, 200);
@@ -688,6 +715,11 @@ void highscorepage(void){
         iText(start_x + 250, start_y, itoa(hscore[i], str, 10));
         start_y -= gapY;
     }
+}
+
+void instructions(void){
+    //int start_x = screenX -
+
 
 }
 
@@ -704,12 +736,13 @@ int main(){
     delay = 0;
     fighter1.life = 3;
     storeHighscore();
-    iSetTimer(7000, createEnemy);
+    iSetTimer(3000, createEnemy);
     iSetTimer(1000, fdelay);
-    iSetTimer(1000, enemyshoot);
-    iSetTimer(20000, cloudcreate);
+    iSetTimer(500, enemyshoot);
+    iSetTimer(5000, cloudcreate);
 
     iInitialize(screenX, screenY, "SS - fighter");
 
     return 0;
 }
+
