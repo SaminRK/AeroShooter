@@ -10,7 +10,6 @@ using namespace std;
 #define CLOUD 10
 #define HS 10
 
-
 ////////gameplay functions/////////
 void showBullet(void);
 void showEnemy(void);
@@ -38,8 +37,8 @@ void instructions(void);
 int screenX = 500;
 int screenY = 500;
 int page, opt;
-//highscore variables//
 
+//highscore variables//
 char scorer[HS][100];
 int hscore[HS];
 int idx = 10;
@@ -47,22 +46,16 @@ int naamdin = 0;
 char str1[100], str2[100];
 int len = 0;
 
-
-
 ////gameplay variables/////
 int delay;
-
 int magazine = MAGAZINE;
-
 int scoreX = screenX - 100;
 int scoreY = screenY - 50;
 char str[100];
 char strtemp[50];
-
 int b, eb, enemySerial, enemyfireserial, score, cloudserial;
 
 struct fighter{
-
     int initialX = screenX / 2;
     int initialY = 0;
     float x = initialX;
@@ -72,11 +65,9 @@ struct fighter{
     float velocity = 5;
     int life;
 };
-
 fighter fighter1;
 
 struct enemyFighter{
-
     int initialX;
     int initialY = screenY - 100;
     float x = initialX;
@@ -87,31 +78,24 @@ struct enemyFighter{
     int existance = 0;
     int shootingpower = 0;
 };
-
 enemyFighter enemyFighter[ENEMY];
 
-
-
 struct bullet{
-
     float x;
     float y;
-    float velocity = .75;
+    float velocity = .5;
     int killingPower = 0;
 };
-
 struct bullet bullet[MAGAZINE];
 struct bullet enemybullet[ENEMYBULLET];
 
 struct cloud{
-
     float x;
     float y;
     int radius;
     int existance;
     float velocity = 0.03;
 };
-
 struct cloud cloud[CLOUD];
 /*
 function iDraw() is called again and again by the system.
@@ -120,20 +104,19 @@ void iDraw(){
     //place your drawing codes here
     iClear();
     if (page == 1){  //gameplay page == 1
-        iSetColor(120, 105, 255);
+        iSetColor(170, 200, 247);
         iFilledRectangle(0, 0, screenX, screenY);
-
         showCloud();
         iSetColor(255, 255, 255);
         showBullet();
         myplaneshape(fighter1.x, fighter1.y, fighter1.width, fighter1.length);
-        iSetColor(100, 255,100);
+        showEnemy();
+        iSetColor(45, 114,26);
         iText(scoreX, scoreY, itoa(score, str, 10), GLUT_BITMAP_9_BY_15);
         iText(scoreX - 75, scoreY, "Score :", GLUT_BITMAP_9_BY_15);
         iText(scoreX - 75, scoreY - 50 , "Life :", GLUT_BITMAP_9_BY_15);
         iText(scoreX, scoreY - 50, itoa(fighter1.life, strtemp, 10), GLUT_BITMAP_9_BY_15);
         iSetColor(255, 255, 255);
-        showEnemy();
         kill();
         collision();
         enemybulletaction();
@@ -174,12 +157,15 @@ function iMouse() is called when the user presses/releases the mouse.
 void iMouse(int button, int state, int mx, int my){
     if(button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
         //place your codes here
-        bullet[b].killingPower = 1;
-        bullet[b].x = fighter1.x;
-        bullet[b].y = fighter1.y + fighter1.length;
-        b++;
-        if(b >= magazine){
-            b = 0;
+        if(page == 1 && delay == 0){
+            delay = 1;
+            bullet[b].killingPower = 1;
+            bullet[b].x = fighter1.x;
+            bullet[b].y = fighter1.y + fighter1.length;
+            b++;
+            if(b >= magazine){
+                b = 0;
+            }
         }
     }
     if(button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
@@ -268,8 +254,6 @@ void iKeyboard(unsigned char key){
             }
         }
     }
-
-
 //place your codes for other keys here
 }
 /*
@@ -307,14 +291,12 @@ void iSpecialKeyboard(unsigned char key){
         else if (opt == 3 && key == GLUT_KEY_DOWN) opt = 4;
         else if (opt == 4 && key == GLUT_KEY_UP) opt = 3;
     }
-
 //place your codes for other keys here
 }
 
 void showBullet(void){
 
     int i;
-
     iSetColor(0, 0, 5);
     for (i = 0; i < magazine; i++){
         if (bullet[i].killingPower){
@@ -369,7 +351,6 @@ void createEnemy(void){
 void collision(void){
 
     int i;
-
     for (i = 0; i < ENEMY; i++){
         if (((fighter1.x - enemyFighter[i].x) <= fighter1.width) && ((enemyFighter[i].x - fighter1.x) <= fighter1.width)  && ((enemyFighter[i].y - fighter1.y) <=fighter1.length) && (( fighter1.y - enemyFighter[i].y) <=fighter1.length) && enemyFighter[i].existance == 1){
             enemyFighter[i].existance = 0;
@@ -396,7 +377,6 @@ void myplaneshape(int x, int y, int w, int l){
     int ellipsemin = 7.5;
     int ellipsemax = 15;
 
-    //iFilledRectangle(x - w/2, y, w, l);
     iSetColor(5, 0, 100);
     iFilledPolygon(xa, ya, 3);
     iSetColor(100, 100, 100);
@@ -414,8 +394,6 @@ void enemyplaneshape(int x, int y, int w, int l){
     int ellipsemin = 7.5;
     int ellipsemax = 15;
 
-
-    //iFilledRectangle(x - w/2, y, w, l);
     iSetColor(255, 0, 0);
     iFilledPolygon(xa, ya, 3);
     iSetColor(255, 255, 255);
@@ -430,26 +408,32 @@ void enemyplaneshape(int x, int y, int w, int l){
 void fdelay(void){
 
     if (delay) delay = 0;
-
 }
 
+float v = 0;
 void enemyshoot(void){
-    if (page == 1){
-        if (enemyFighter[enemyfireserial].existance){
-            enemybullet[eb].killingPower = 1;
-            enemybullet[eb].x = enemyFighter[enemyfireserial].x;
-            enemybullet[eb].y = enemyFighter[enemyfireserial].y - enemyFighter[enemyfireserial].length;
-            eb++;
-        }
-        if(eb >=ENEMYBULLET){
-            eb = 0;
-        }
-        if(enemyfireserial >= ENEMY){
-            enemyfireserial = 0;
-        }
-        enemyfireserial++;
-    }
+    float range;
 
+    range = 250 / (score + 0.5);
+    if (v >= range){
+        if (page == 1){
+            if (enemyFighter[enemyfireserial].existance){
+                enemybullet[eb].killingPower = 1;
+                enemybullet[eb].x = enemyFighter[enemyfireserial].x;
+                enemybullet[eb].y = enemyFighter[enemyfireserial].y - enemyFighter[enemyfireserial].length;
+                eb++;
+            }
+            if(eb >=ENEMYBULLET){
+                eb = 0;
+            }
+            if(enemyfireserial >= ENEMY){
+                enemyfireserial = 0;
+            }
+            enemyfireserial++;
+        }
+        v = 0;
+    }
+    else v = v + 1;
 }
 
 void enemybulletaction(void){
@@ -491,8 +475,6 @@ void showCloud(){
         if (cloud[i].existance){
             iFilledCircle(cloud[i].x, cloud[i].y, cloud[i].radius, 100);
             cloud[i].y -= cloud[i].velocity;
-            //enemyplaneshape(enemyFighter[i].x, enemyFighter[i].y, enemyFighter[i].width, enemyFighter[i].length);
-            //enemyFighter[i].y -= enemyFighter[i].velocity;
         }
     }
     iSetColor(255, 255, 255);
@@ -502,7 +484,7 @@ void indexPage(void){
     ////index page variables////
     int titleX = screenX / 2 - 55;
     int titleY = screenY - 75;
-    int enterX = 140;
+    int enterX = 165;
     int enterY = 20;
     int option_length = 200;
     int option_width = 50;
@@ -553,10 +535,6 @@ void indexPage(void){
         iRectangle(option_x, option_y - 225, option_length, option_width);
         iText(option_x + 67.5, option_y + 20 - 225, "QUIT", GLUT_BITMAP_9_BY_15);
     }
-
-
-
-    iSetColor(0, 100, 200);
 }
 
 void endPage(void){
@@ -572,7 +550,8 @@ void endPage(void){
     iSetColor(255, 255, 255);
     iText(endX, endY, "GAME OVER!!!!", GLUT_BITMAP_HELVETICA_18);
     iText(endscoreX, endscoreY, "Your Score :", GLUT_BITMAP_9_BY_15);
-    iText(enterX, enterY - 50, "press ENTER to play the game again");
+    if (naamdin == 0) iText(enterX, enterY - 50, "press ENTER to play the game again");
+    else iText(enterX, enterY - 50, "press ENTER to set your NAME");
     iText(endscoreX + 150, endscoreY, itoa(score, str, 10), GLUT_BITMAP_9_BY_15);
     if (idx < 10) {
         if (idx == 0) iText(endX, endY - 50, strcat(itoa(idx + 1, temp, 10 ) ,"st"), GLUT_BITMAP_HELVETICA_18);
@@ -600,38 +579,13 @@ void storeHighscore(void){
 }
 
 void checkhighscore(void){
-    //FILE *fp;
     int i, j;
-    //char* str = "saminnn";
-
-    //fp = fopen("highscore.txt", "w");
-
     for (idx = 10; idx > 0; idx--){
         if (score < hscore[idx - 1] ) break;
     }
     if (idx < 10){
         naamdin = 1;
     }
-    /*if (idx >= 9){
-        for (i = 8; i >= idx; i--){
-            hscore[i + 1] = hscore[i];
-            for (j = 0; scorer[i][j] != 0; j++){
-                scorer[i + 1][j] = scorer[i][j];
-            }
-        }
-        cout << str2;
-        hscore[idx] = score;
-        for (i = 0; str2[i] != 0; i++){
-            scorer[idx][i] = str2[i];
-        }
-        for (i = 0; i < 10; i++){
-            cout << hscore[i] << endl;
-        }
-        for (i = 0; i < 10; i++){
-            fprintf(fp, "%s %d\n", scorer[i], hscore[i]);
-        }
-    }
-    fclose(fp);*/
 }
 
 void writeHighscore(void){
@@ -660,7 +614,6 @@ void writeHighscore(void){
     for (i = 0; i < 10; i++){
         fprintf(fp, "%s %d\n", scorer[i], hscore[i]);
     }
-
     fclose(fp);
 }
 
@@ -698,18 +651,20 @@ void resetgame(void){
 
 void highscorepage(void){
 
-    int hs_x = screenX / 2 - 100;
-    int hs_y = screenY - 100;
+    int titleX = screenX / 2 - 65;
+    int titleY = screenY - 75;
     int gapY = 30;
-    int start_x = 100;
-    int start_y = screenY - 200;
+    int start_x = 120;
+    int start_y = screenY - 170;
+    int enterX = 155;
+    int enterY = 20;
     int i;
     char str[100];
 
-
     iSetColor(255, 255, 255);
-    iText(hs_x, hs_y, "HIGHSCORES", GLUT_BITMAP_HELVETICA_18);
-
+    iShowBMP(0, 0, "bmp/index.bmp");
+    iText(titleX, titleY, "HIGHSCORES", GLUT_BITMAP_HELVETICA_18);
+    iText(enterX, enterY, "Press ENTER to go BACK");
     for (i = 0; i < 10; i++){
         iText(start_x, start_y, scorer[i]);
         iText(start_x + 250, start_y, itoa(hscore[i], str, 10));
@@ -718,9 +673,19 @@ void highscorepage(void){
 }
 
 void instructions(void){
-    //int start_x = screenX -
+    int startx = 50;
+    int starty = screenY - 200;
+    int titleX = screenX / 2 - 75;
+    int titleY = screenY - 75;
+    int enterX = 155;
+    int enterY = 20;
 
-
+    iSetColor(255, 255, 255);
+    iShowBMP(0, 0, "bmp/index.bmp");
+    iText(titleX, titleY, "INSTRUCTIONS", GLUT_BITMAP_HELVETICA_18);
+    iText(startx, starty, "->> Press the ARROW KEYS to control the aircraft");
+    iText(startx + 90, starty - 35, "->> Press the F to fire");
+    iText(enterX, enterY, "Press ENTER to go BACK");
 }
 
 int main(){
@@ -738,11 +703,10 @@ int main(){
     storeHighscore();
     iSetTimer(3000, createEnemy);
     iSetTimer(1000, fdelay);
-    iSetTimer(500, enemyshoot);
-    iSetTimer(5000, cloudcreate);
+    iSetTimer(5, enemyshoot);
+    iSetTimer(7000, cloudcreate);
 
     iInitialize(screenX, screenY, "SS - fighter");
 
     return 0;
 }
-
